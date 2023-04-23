@@ -6,10 +6,10 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from torch.utils.data import SubsetRandomSampler, DataLoader
 
-from . import get_top_genre_id, FeatureLabelMerger, GenreClassificationDataset, FeatureNormalizer
+from . import FeatureLabelMerger, GenreClassificationDataset, FeatureNormalizer
 
 
-def feature_preparator(feature_file: str, batch_size: int):
+def feature_preparator(feature_file: str, batch_size: int, transform=None):
     # Загружаем предвычесленный файл с фичами
     # Объект где ключ - id трека, значение - массив фичей
     id_to_features = pickle.load(open(feature_file, 'rb'))
@@ -21,21 +21,12 @@ def feature_preparator(feature_file: str, batch_size: int):
     # Перезаписываем переменную id_to_features соответственно
     id_to_features = {key: normalized_features[idx] for idx, key in enumerate(id_to_features.keys())}
     assert len(id_to_features.values()) == id_to_features_old_len
+
     # Загружаем метаданные
-    metadata = pd.read_csv('fma_metadata/raw_tracks.csv')[['track_id', 'track_genres']]
-    metadata.dropna(inplace=True)
-    # Каждая песня имеет в среднем 2 - 3 жанра. Возьмем только нулевой элемент # Проверить мультикласс
-    metadata['first_genre'] = metadata['track_genres'].apply(lambda x: ast.literal_eval(x)[0]['genre_id'])
-    metadata['first_genre'] = metadata['track_genres'].apply(lambda x: ast.literal_eval(x)[0]['genre_id'])
+    metadata = pd.read_csv('./genre_classification_metadata.csv')
 
-    # Загружаем датасет жанров
-    genres = pd.read_csv('fma_metadata/genres.csv')
-
-    # По нулевому элементу найдем его рута
-    metadata['top_genre'] = metadata['first_genre'].apply(lambda genre_id: get_top_genre_id(genres, int(genre_id)))
-
-    # Создаем словарь маппер id песни - топ жанр
-    id_to_genre = {str(k): v for k, v in metadata.set_index('track_id').to_dict()['top_genre'].items()}
+    # Создаем словарь маппер id песни - жанр
+    id_to_genre = {str(k): v for k, v in metadata.set_index('track_id').to_dict()['title'].items()}
 
     # Мержим метки и фичи между собой. Примечательно, что сохраняется только пересечение id, которые есть в обоих словарях.
     merged_feature_label = FeatureLabelMerger.merge(id_to_features, id_to_genre)
@@ -48,11 +39,11 @@ def feature_preparator(feature_file: str, batch_size: int):
     idx_to_label = {i: label for i, label in enumerate(merged_feature_label_unique_labels)}
 
     # Создаем кастомный датасет
-    dataset = GenreClassificationDataset(merged_feature_label, label_to_idx)
+    dataset = GenreClassificationDataset(merged_feature_label, label_to_idx, transform=transform)
 
     # Разбиваем выборку на 3 части - тренировочную, валидационную и тестовую
     TRAIN_SIZE = 0.7
-    VAL_SIZE = 0.2
+    VAL_SIZE = 0.15
     TEST_SIZE = 1 - TRAIN_SIZE - VAL_SIZE
 
     assert TRAIN_SIZE + VAL_SIZE + TEST_SIZE == 1

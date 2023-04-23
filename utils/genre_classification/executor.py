@@ -3,23 +3,38 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
-from .calculate_acurracy import calculate_accuracy
+from . import calculate_accuracy
 from .evaluate import evaluate
 
 
-def executor(device, model, train_dataloader, val_dataloader, epochs, learning_rate=1e-3, evaluate_per_iteration=300,
-             weight_decay=0.05, early_stop_after=None) -> (np.array, np.array):
+def executor(
+        device,
+        model,
+        train_dataloader,
+        val_dataloader,
+        epochs,
+        learning_rate=1e-3,
+        evaluate_per_iteration=300,
+        weight_decay=0.05,
+        early_stop_after=None,
+        lr_scheduler=lambda optimizer: torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, mode='min'),
+) -> (np.array, np.array):
+
     # Определяем лосс функцию - кроссэнтропия
     criterion = nn.CrossEntropyLoss()  # Можно забацать веса
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
                                  weight_decay=weight_decay)  # Попробовать weight decay
 
+    scheduler = lr_scheduler(optimizer)  # Определяем scheduler
+
     train_progress = []  # [(epoch_loss, epoch_accuracy)]
     val_progress = []  # [(epoch_loss, epoch_accuracy)]
 
     epoch_without_progress = 0
     val_last_epoch_loss = float('inf')
+    best_val_loss = float('inf')
+    best_model_state_dict = None
 
     for epoch in tqdm(range(epochs)):
         train_epoch_loss = 0
@@ -58,6 +73,12 @@ def executor(device, model, train_dataloader, val_dataloader, epochs, learning_r
             (train_epoch_loss / max(train_iter_num, 1), train_epoch_accuracy / max(train_iter_num, 1)))
         val_progress.append((val_epoch_loss / max(val_iter_num, 1), val_epoch_accuracy / max(val_iter_num, 1)))
 
+        scheduler.step(val_epoch_loss)
+
+        if val_progress[-1][0] < best_val_loss:
+            best_val_loss = val_progress[-1][0]
+            best_model_state_dict = model.state_dict()
+
         if early_stop_after is not None:
             max_epoch_without_progress, min_epoch_progress = early_stop_after
 
@@ -71,4 +92,5 @@ def executor(device, model, train_dataloader, val_dataloader, epochs, learning_r
                 print('Early stop!')
                 break
 
+    model.load_state_dict(best_model_state_dict)
     return np.array(train_progress), np.array(val_progress)
