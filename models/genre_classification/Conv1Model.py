@@ -2,7 +2,7 @@ from torch import nn
 
 # Свертка по времени
 class Conv1Model(nn.Module):
-    def __init__(self, num_class, time_size):
+    def __init__(self, num_class, time_size, feature_size = 128):
         super(Conv1Model, self).__init__()
 
         horizontal_size = int(time_size / 4)
@@ -12,7 +12,7 @@ class Conv1Model(nn.Module):
         self.conv3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(horizontal_size, 1))
         self.conv4 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(horizontal_size, 1))
 
-        self.linear_1 = nn.Linear(65536, 512)
+        self.linear_1 = nn.Linear(4 * 128 * feature_size, 512)
         self.linear_2 = nn.Linear(512, 256)
         self.linear_3 = nn.Linear(256, 128)
         self.linear_4 = nn.Linear(128, 64)

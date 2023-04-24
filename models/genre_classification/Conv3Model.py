@@ -9,7 +9,7 @@ def calculate_shape(x, n_layers=4):
     return int(x)
 
 class Conv3Model(nn.Module):
-    def __init__(self, num_class, time_size, feature_size):
+    def __init__(self, num_class, time_size, feature_size, ):
         super(Conv3Model, self).__init__()
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(3, 3))
@@ -17,12 +17,16 @@ class Conv3Model(nn.Module):
         self.conv3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(3, 3))
         self.conv4 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3, 3))
 
+        time_shape = calculate_shape(time_size)
+        feature_shape = calculate_shape(feature_size)
+
         self.pooling1 = nn.MaxPool2d(kernel_size=(2, 2))
         self.pooling2 = nn.MaxPool2d(kernel_size=(2, 2))
         self.pooling3 = nn.MaxPool2d(kernel_size=(2, 2))
-        self.pooling4 = nn.MaxPool2d(kernel_size=(2, 2))
+        self.pooling4 = nn.MaxPool2d(kernel_size=(2, 2 if feature_shape > 0 else 1))
 
-        fc_input_size = calculate_shape(time_size) * calculate_shape(feature_size) * 128
+        feature_shape = max(feature_shape, 1)
+        fc_input_size = time_shape * feature_shape * 128
 
         self.linear_1 = nn.Linear(fc_input_size, 512)
         self.linear_2 = nn.Linear(512, 256)
@@ -42,7 +46,6 @@ class Conv3Model(nn.Module):
         self.linear_batchnorm2 = nn.BatchNorm1d(256, affine=True)
         self.linear_batchnorm3 = nn.BatchNorm1d(128, affine=True)
         self.linear_batchnorm4 = nn.BatchNorm1d(64, affine=True)
-
 
         self.dropout1 = nn.Dropout(0.1)
         self.dropout2 = nn.Dropout(0.1)
@@ -95,3 +98,4 @@ class Conv3Model(nn.Module):
         x = self.dropout4(x)
 
         return self.linear_out(x)
+#%%

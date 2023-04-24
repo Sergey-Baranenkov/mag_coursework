@@ -1,4 +1,3 @@
-import ast
 import pickle
 
 import numpy as np
@@ -7,20 +6,22 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import SubsetRandomSampler, DataLoader
 
 from . import FeatureLabelMerger, GenreClassificationDataset, FeatureNormalizer
+from .dataset import GenreClassificationDatasetForExternal
 
 
-def feature_preparator(feature_file: str, batch_size: int, transform=None):
+def feature_preparator(feature_file: str, batch_size: int, transform=None, normalize=True, external=False):
     # Загружаем предвычесленный файл с фичами
     # Объект где ключ - id трека, значение - массив фичей
     id_to_features = pickle.load(open(feature_file, 'rb'))
     id_to_features_old_len = len(id_to_features.values())
 
-    # Нормализуем каждую фичу чтобы они имели 0 матожидание и единичную дисперсию
-    # Получаем массив, где индекс соответствует порядку итерации начального объекта
-    normalized_features = FeatureNormalizer.normalize(id_to_features.values())
-    # Перезаписываем переменную id_to_features соответственно
-    id_to_features = {key: normalized_features[idx] for idx, key in enumerate(id_to_features.keys())}
-    assert len(id_to_features.values()) == id_to_features_old_len
+    if normalize:
+        # Нормализуем каждую фичу чтобы они имели 0 матожидание и единичную дисперсию
+        # Получаем массив, где индекс соответствует порядку итерации начального объекта
+        normalized_features = FeatureNormalizer.normalize(id_to_features.values())
+        # Перезаписываем переменную id_to_features соответственно
+        id_to_features = {key: normalized_features[idx] for idx, key in enumerate(id_to_features.keys())}
+        assert len(id_to_features.values()) == id_to_features_old_len
 
     # Загружаем метаданные
     metadata = pd.read_csv('./genre_classification_metadata.csv')
@@ -39,7 +40,8 @@ def feature_preparator(feature_file: str, batch_size: int, transform=None):
     idx_to_label = {i: label for i, label in enumerate(merged_feature_label_unique_labels)}
 
     # Создаем кастомный датасет
-    dataset = GenreClassificationDataset(merged_feature_label, label_to_idx, transform=transform)
+    dataset = GenreClassificationDataset(merged_feature_label, label_to_idx, transform=transform) if not external \
+        else GenreClassificationDatasetForExternal(merged_feature_label, label_to_idx, transform=transform)
 
     # Разбиваем выборку на 3 части - тренировочную, валидационную и тестовую
     TRAIN_SIZE = 0.7

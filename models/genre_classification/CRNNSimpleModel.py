@@ -8,7 +8,7 @@ def calculate_shape(x, n_layers=4):
 
 
 class CRNNSimpleModel(nn.Module):
-    def __init__(self, num_class = 8):
+    def __init__(self, num_class = 8, feature_size = 128):
         super(CRNNSimpleModel, self).__init__()
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(3, 3))
@@ -16,12 +16,16 @@ class CRNNSimpleModel(nn.Module):
         self.conv3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(3, 3))
         self.conv4 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3, 3))
 
+        feature_shape = calculate_shape(feature_size)
+
         self.pooling1 = nn.MaxPool2d(kernel_size=(2, 2))
         self.pooling2 = nn.MaxPool2d(kernel_size=(2, 2))
         self.pooling3 = nn.MaxPool2d(kernel_size=(2, 2))
-        self.pooling4 = nn.MaxPool2d(kernel_size=(2, 2))
+        self.pooling4 = nn.MaxPool2d(kernel_size=(2, 2 if feature_shape > 0 else 1))
 
-        self.lstm = nn.LSTM(768, 512, bidirectional=True, batch_first=True)
+        feature_shape = max(feature_shape, 1)
+
+        self.lstm = nn.LSTM(feature_shape * 128, 512, bidirectional=True, batch_first=True)
 
         self.linear_1 = nn.Linear(1024, 512)
         self.linear_2 = nn.Linear(512, 256)

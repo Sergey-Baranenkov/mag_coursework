@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
-from . import calculate_accuracy
+from .calculate_acurracy import calculate_accuracy
 from .evaluate import evaluate
 
 
@@ -18,6 +18,7 @@ def executor(
         weight_decay=0.05,
         early_stop_after=None,
         lr_scheduler=lambda optimizer: torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, mode='min'),
+        print_metrics=False,
 ) -> (np.array, np.array):
 
     # Определяем лосс функцию - кроссэнтропия
@@ -74,6 +75,9 @@ def executor(
         val_progress.append((val_epoch_loss / max(val_iter_num, 1), val_epoch_accuracy / max(val_iter_num, 1)))
 
         scheduler.step(val_epoch_loss)
+
+        if print_metrics:
+            print(train_progress[-1][0], val_progress[-1][0])
 
         if val_progress[-1][0] < best_val_loss:
             best_val_loss = val_progress[-1][0]
