@@ -3,3 +3,4 @@ fma_metadata
 features
 .idea
 catboost_info
+__pycache__
