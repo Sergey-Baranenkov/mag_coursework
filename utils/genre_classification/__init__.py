@@ -4,7 +4,7 @@ from .feature_normalizer import FeatureNormalizer
 from .dataset import GenreClassificationDataset
 from .executor import executor
 from .evaluate import evaluate
-from .calculate_acurracy import calculate_accuracy
+from .calculate_accuracy import calculate_accuracy
 from .feature_preparator import feature_preparator
 from .random_features_slicer import random_features_slicer
 from .plot_metrics import plot_metrics

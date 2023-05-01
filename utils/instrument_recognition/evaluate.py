@@ -15,11 +15,10 @@ def evaluate(device, model, dataloader, criterion, return_pred: bool):
         for x_data, y_true in dataloader:
             x_data, y_true = x_data.to(device), y_true.to(device)
             pred_logits = model(x_data)
-            batch_loss = criterion(pred_logits, y_true).item()
+            batch_loss = criterion(pred_logits, y_true.float().unsqueeze(1)).item()
             loss_sum += batch_loss
 
-            y_pred_softmax = torch.log_softmax(pred_logits, dim=1)
-            _, y_pred = torch.max(y_pred_softmax, dim=1)
+            y_pred = torch.sigmoid(pred_logits) > 0.5
 
             accuracy_sum += calculate_accuracy(y_pred, y_true)
 

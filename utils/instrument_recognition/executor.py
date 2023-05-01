@@ -21,8 +21,8 @@ def executor(
         print_metrics=False,
 ) -> (np.array, np.array):
 
-    # Определяем лосс функцию - кроссэнтропия
-    criterion = nn.CrossEntropyLoss()  # Можно забацать веса
+    # Определяем лосс функцию - бинарная кроссэнтропия
+    criterion = nn.BCEWithLogitsLoss()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
                                  weight_decay=weight_decay)  # Попробовать weight decay
@@ -51,16 +51,15 @@ def executor(
             train_iter_num += 1
 
             x_data, y_true = x_data.to(device), y_true.to(device)
+
             model.train()
             pred_logits = model(x_data)
             optimizer.zero_grad()
-            loss = criterion(pred_logits, y_true)
+            loss = criterion(pred_logits, y_true.float().unsqueeze(1))
             loss.backward()
             optimizer.step()
 
-            y_pred_softmax = torch.log_softmax(pred_logits, dim=1)
-            _, y_pred = torch.max(y_pred_softmax, dim=1)
-
+            y_pred = torch.sigmoid(pred_logits) > 0.5
             train_epoch_loss += loss.item()
             train_epoch_accuracy += calculate_accuracy(y_pred, y_true)
 
