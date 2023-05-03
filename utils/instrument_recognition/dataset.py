@@ -2,9 +2,10 @@ from torch.utils.data import Dataset
 
 
 class InstrumentClassificationDataset(Dataset):
-    def __init__(self, X, Y, transform=None):
+    def __init__(self, X, Y, global_indices, transform=None):
         self.X = X
         self.Y = Y
+        self.global_indices = global_indices
         self.transform = transform
 
     def __len__(self):
@@ -19,4 +20,4 @@ class InstrumentClassificationDataset(Dataset):
         if self.transform:
             x = self.transform(x)
 
-        return x, y
+        return x, y, self.global_indices[idx]

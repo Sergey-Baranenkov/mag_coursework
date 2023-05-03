@@ -69,6 +69,10 @@ def feature_preparator(batch_size: int, positive_threshold = 0.5, transform=None
         val_inst = Y_mask_val[:, inst_num]
         test_inst = Y_mask_test[:, inst_num]
 
+        train_instrument_indices = train_inst.nonzero()[0]
+        val_instrument_indices = val_inst.nonzero()[0]
+        test_instrument_indices = test_inst.nonzero()[0]
+
         # Выбираем только те x и y, в которых было измерено наличие или отсутствие инструмента
         X_train_inst = X_train[train_inst]
         X_val_inst = X_val[val_inst]
@@ -79,13 +83,28 @@ def feature_preparator(batch_size: int, positive_threshold = 0.5, transform=None
         Y_true_val_inst = Y_true_val[val_inst, inst_num] >= positive_threshold
         Y_true_test_inst = Y_true_test[test_inst, inst_num] >= positive_threshold
 
-        train_dataset = InstrumentClassificationDataset(X_train_inst, Y_true_train_inst, transform=transform)
-        val_dataset = InstrumentClassificationDataset(X_val_inst, Y_true_val_inst, transform=transform)
-        test_dataset = InstrumentClassificationDataset(X_test_inst, Y_true_test_inst, transform=transform)
+        train_dataset = InstrumentClassificationDataset(
+            X_train_inst,
+            Y_true_train_inst,
+            global_indices=train_instrument_indices,
+            transform=transform
+        )
+        val_dataset = InstrumentClassificationDataset(
+            X_val_inst,
+            Y_true_val_inst,
+            global_indices=val_instrument_indices,
+            transform=transform
+        )
+        test_dataset = InstrumentClassificationDataset(
+            X_test_inst,
+            Y_true_test_inst,
+            global_indices=test_instrument_indices,
+            transform=transform
+        )
 
-        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, drop_last=True)
-        val_dataloader = DataLoader(val_dataset, batch_size=batch_size, drop_last=True)
-        test_dataloader = DataLoader(test_dataset, batch_size=batch_size, drop_last=True)
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, drop_last=True, shuffle=True)
+        val_dataloader = DataLoader(val_dataset, batch_size=batch_size, drop_last=True, shuffle=True)
+        test_dataloader = DataLoader(test_dataset, batch_size=batch_size, drop_last=True, shuffle=True)
 
         dataloaders[instrument] = [
             train_dataloader,
@@ -93,6 +112,7 @@ def feature_preparator(batch_size: int, positive_threshold = 0.5, transform=None
             test_dataloader,
         ]
 
-    return dataloaders, idx_to_instrument
+    shapes = (X_train.shape[0], X_val.shape[0], X_test.shape[0])
+    return dataloaders, idx_to_instrument, instrument_to_idx, shapes
 
 #%%

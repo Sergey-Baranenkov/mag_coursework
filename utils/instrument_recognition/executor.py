@@ -47,7 +47,7 @@ def executor(
         train_epoch_accuracy = 0
         val_epoch_accuracy = 0
 
-        for x_data, y_true in train_dataloader:
+        for x_data, y_true, _ in train_dataloader:
             train_iter_num += 1
 
             x_data, y_true = x_data.to(device), y_true.to(device)
@@ -58,8 +58,7 @@ def executor(
             loss = criterion(pred_logits, y_true.float().unsqueeze(1))
             loss.backward()
             optimizer.step()
-
-            y_pred = torch.sigmoid(pred_logits) > 0.5
+            y_pred = (torch.sigmoid(pred_logits) > 0.5).flatten()
             train_epoch_loss += loss.item()
             train_epoch_accuracy += calculate_accuracy(y_pred, y_true)
 
@@ -97,3 +96,5 @@ def executor(
 
     model.load_state_dict(best_model_state_dict)
     return np.array(train_progress), np.array(val_progress)
+
+#%%

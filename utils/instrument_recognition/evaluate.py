@@ -12,13 +12,13 @@ def evaluate(device, model, dataloader, criterion, return_pred: bool):
 
     model.eval()
     with torch.no_grad():
-        for x_data, y_true in dataloader:
+        for x_data, y_true, _ in dataloader:
             x_data, y_true = x_data.to(device), y_true.to(device)
             pred_logits = model(x_data)
             batch_loss = criterion(pred_logits, y_true.float().unsqueeze(1)).item()
             loss_sum += batch_loss
 
-            y_pred = torch.sigmoid(pred_logits) > 0.5
+            y_pred = (torch.sigmoid(pred_logits) > 0.5).flatten()
 
             accuracy_sum += calculate_accuracy(y_pred, y_true)
 
