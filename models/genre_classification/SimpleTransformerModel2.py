@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 class TransformerClassifier(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers, num_heads, dropout):
-        super().__init__()
+        super(TransformerClassifier).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
