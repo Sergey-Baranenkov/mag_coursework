@@ -5,3 +5,5 @@ features
 catboost_info
 __pycache__
 .ipynb_checkpoints
+pretrained_models
+output
