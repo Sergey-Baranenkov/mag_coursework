@@ -4,19 +4,22 @@ from librosa.feature import mfcc, spectral_centroid, spectral_rolloff, spectral_
 
 from utils.feature_extraction import AudioPreprocessor
 from utils.feature_extraction.FeatureExtractor import Extractor
-import torch
+import tempfile
+import soundfile as sf
 
-model = torch.hub.load('harritaylor/torchvggish', 'vggish')
-model.eval()
 
 class VGGishExtractor(Extractor):
     def __init__(self, model):
         self.model = model
 
     def execute(self, audio: AudioPreprocessor, hop_size: int, window_size: int):
-        features = model.forward('data/test.mp3').cpu().detach().numpy()
+        ext = f".{audio.path.split('.')[-1]}"
+        # Создаем временный файл для сохранения аудио т.к моделька читает файлы
+        with tempfile.NamedTemporaryFile(suffix=ext) as file:
+            sf.write(file.name, audio.song, samplerate=audio.sample_rate)
+            features = self.model.forward(file.name).cpu().detach().numpy()
+            return features
 
-        return features
 
 class MFCCExtractor(Extractor):
     def __init__(self, n_mfcc):

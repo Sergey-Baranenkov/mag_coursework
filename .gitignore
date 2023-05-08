@@ -4,3 +4,4 @@ features
 .idea
 catboost_info
 __pycache__
+.ipynb_checkpoints

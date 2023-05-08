@@ -1,13 +1,15 @@
 from torch import nn
 
+
 def calculate_shape(x, n_layers=4):
     for i in range(n_layers):
         x = (x - 2) / 2
 
     return int(x)
 
+
 class CRNNSimple2Model(nn.Module):
-    def __init__(self, num_class = 8, feature_size = 128):
+    def __init__(self, num_class=8, feature_size=128):
         super(CRNNSimple2Model, self).__init__()
 
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=(3, 3))
@@ -23,7 +25,6 @@ class CRNNSimple2Model(nn.Module):
         self.pooling4 = nn.MaxPool2d(kernel_size=(2, 2 if feature_shape > 0 else 1))
 
         feature_shape = max(feature_shape, 1)
-        print(feature_shape)
         self.lstm = nn.LSTM(feature_shape * 128, 256, bidirectional=False, batch_first=True, num_layers=3)
 
         self.linear_1 = nn.Linear(256, 256)
@@ -52,7 +53,7 @@ class CRNNSimple2Model(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, x):
-        x = x[:, None,:,:]
+        x = x[:, None, :, :]
 
         x = self.conv1(x)
         x = self.conv_batchnorm1(x)
@@ -73,19 +74,14 @@ class CRNNSimple2Model(nn.Module):
         x = self.conv_batchnorm4(x)
         x = self.relu(x)
         x = self.pooling4(x)
-        #print(x.shape)
-
-
 
         x = x.permute(0, 2, 1, 3)
-        #print(x.shape)
-        x = x.flatten(start_dim = 2)
-        #print(x.shape)
-        #return
+
+        x = x.flatten(start_dim=2)
+
         out, _ = self.lstm(x)
         out = out[:, -1]
         x = self.tanh(out)
-        #print(x.shape)
 
         x = self.linear_1(x)
         x = self.linear_batchnorm1(x)
@@ -101,10 +97,5 @@ class CRNNSimple2Model(nn.Module):
         x = self.linear_batchnorm3(x)
         x = self.relu(x)
         x = self.dropout3(x)
-        #
-        # x = self.linear_4(x)
-        # x = self.linear_batchnorm4(x)
-        # x = self.relu(x)
-        # x = self.dropout4(x)
 
         return self.linear_out(x)

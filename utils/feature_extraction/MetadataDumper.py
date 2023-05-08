@@ -3,7 +3,7 @@ import os
 import pickle
 from typing import List
 
-from pqdm.processes import pqdm
+from pqdm.threads import pqdm
 
 from . import FeatureExtractor
 from . import AudioPreprocessor
@@ -34,17 +34,19 @@ class MetadataDumper:
         self.filter_ids = filter_ids
 
     def func(self, args):
-        path, name = args
-        full_path = os.path.join(path, name)
-        id = get_id_from_filename(name)
-        audio = AudioPreprocessor(full_path, **self.kwargs_for_preprocessor)
+        try:
+            path, name = args
+            full_path = os.path.join(path, name)
+            id = get_id_from_filename(name)
+            audio = AudioPreprocessor(full_path, **self.kwargs_for_preprocessor)
 
-        extractor = FeatureExtractor(audio, **self.kwargs_for_extractor)
-        features = extractor.get_features()
+            extractor = FeatureExtractor(audio, **self.kwargs_for_extractor)
+            features = extractor.get_features()
+            return id, features
+        except BaseException:
+            return 'exception'
 
-        return id, features
-
-    def execute(self, n_jobs = 4, n_files: int = None):
+    def execute(self, n_jobs=4, n_files: int = None):
 
         paths = [(path, name) for path, subdirs, files in os.walk(self.in_dir_path) for name in files]
         if self.filter_ids is not None:
@@ -57,5 +59,6 @@ class MetadataDumper:
         # Иногда могут возникать ошибки на битых аудио. Отбросим такие аудио
         rows_of_pairs = [val for val in rows_of_pairs if isinstance(val, tuple)]
 
-        print(f'После преобразования {len(paths)} осталось {len(rows_of_pairs)} аудио. Ошибок {len(paths) - len(rows_of_pairs)}')
+        print(
+            f'После преобразования {len(paths)} осталось {len(rows_of_pairs)} аудио. Ошибок {len(paths) - len(rows_of_pairs)}')
         pickle.dump(dict(rows_of_pairs), open(self.out_path, 'wb'))

@@ -24,7 +24,7 @@ def feature_preparator(feature_file: str, batch_size: int, transform=None, norma
         assert len(id_to_features.values()) == id_to_features_old_len
 
     # Загружаем метаданные
-    metadata = pd.read_csv('./genre_classification_metadata.csv')
+    metadata = pd.read_csv('./genre_classification/genre_classification_metadata.csv')
 
     # Создаем словарь маппер id песни - жанр
     id_to_genre = {str(k): v for k, v in metadata.set_index('track_id').to_dict()['title'].items()}
