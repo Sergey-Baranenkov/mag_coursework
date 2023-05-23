@@ -1,0 +1,18 @@
+.list-component{
+    width: 100%;
+}
+
+.list-component-label{
+    font-size: 36px;
+    text-align: center;
+}
+
+.list-component-ul{
+    display: flex;
+    gap: 40px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    font-size: 32px;
+    list-style-type: square;
+    list-style-position: inside;
+}

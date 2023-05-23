@@ -1,0 +1,38 @@
+.waveform-container {
+    margin-top:50px;
+    width: 100%;
+    height: 128px;
+}
+
+.waveform-container-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.waveform-label{
+    text-align: center;
+}
+
+.waveform {
+    padding-left: 40px;
+    min-width: calc(100% - 90px);
+}
+
+.playpause {
+    display: block;
+    box-sizing: border-box;
+    width: 0;
+    height: 50px;
+    cursor: pointer;
+    border-color: transparent transparent transparent #202020;
+    transition: 100ms all ease;
+    will-change: border-width;
+    border-style: double;
+    border-width: 0 0 0 40px;
+}
+
+.play {
+    border-style: solid;
+    border-width: 25px 0 25px 40px;
+}

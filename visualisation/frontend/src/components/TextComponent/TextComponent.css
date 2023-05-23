@@ -1,0 +1,8 @@
+.text-component{
+    text-align: center;
+    min-width: 200px;
+    padding: 8px;
+    background-color: black;
+    color: white;
+    border-radius: 10px;
+}
