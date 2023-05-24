@@ -16,5 +16,8 @@
 
 Демонстрация работы алгоритма:
 
-https://github.com/Sergey-Baranenkov/mag_coursework/assets/50075840/f450b0be-c8f4-4b00-b8ad-637b1884edfb
+
+https://github.com/Sergey-Baranenkov/mag_coursework/assets/50075840/df9d6fe6-be14-4969-a683-ab832ec9bc80
+
+
 
