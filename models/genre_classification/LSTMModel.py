@@ -1,31 +1,27 @@
 from torch import nn
 
+
+def linear_block(in_dim, out_dim):
+    return nn.Sequential(
+        nn.Linear(in_dim, out_dim),
+        nn.BatchNorm1d(out_dim),
+        nn.ReLU(out_dim),
+        nn.Dropout(0.1),
+    )
+
+
 class LSTMModel(nn.Module):
     def __init__(self, embedding_dim, hidden_dim, num_class):
         super(LSTMModel, self).__init__()
         self.lstm = nn.LSTM(embedding_dim, hidden_dim)
 
-        self.linear_1 = nn.Linear(hidden_dim, 512)
-        self.linear_2 = nn.Linear(512, 256)
-        self.linear_3 = nn.Linear(256, 128)
-        self.linear_4 = nn.Linear(128, 64)
+        self.linear_1 = linear_block(hidden_dim, 256)
+        self.linear_2 = linear_block(256, 256)
+        self.linear_3 = linear_block(256, 256)
+        self.linear_4 = linear_block(256, 256)
 
-        self.linear_out = nn.Linear(64, num_class)
+        self.linear_out = linear_block(256, num_class)
 
-        self.relu = nn.ReLU()
-
-        self.linear_batchnorm1 = nn.BatchNorm1d(512)
-        self.linear_batchnorm2 = nn.BatchNorm1d(256)
-        self.linear_batchnorm3 = nn.BatchNorm1d(128)
-        self.linear_batchnorm4 = nn.BatchNorm1d(64)
-
-
-        self.dropout1 = nn.Dropout(0.1)
-        self.dropout2 = nn.Dropout(0.1)
-        self.dropout3 = nn.Dropout(0.1)
-        self.dropout4 = nn.Dropout(0.1)
-
-        self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
 
     def forward(self, x):
@@ -33,23 +29,9 @@ class LSTMModel(nn.Module):
         out = out[:, -1]
         x = self.tanh(out)
 
-        x = self.linear_1(x)
-        x = self.linear_batchnorm1(x)
-        x = self.relu(x)
-        #x = self.dropout1(x)
+        x1 = self.linear_1(x)
+        x2 = self.linear_2(x1) + x1
+        x3 = self.linear_3(x2) + x2
+        x4 = self.linear_4(x3) + x3
 
-        x = self.linear_2(x)
-        x = self.linear_batchnorm2(x)
-        x = self.relu(x)
-        #x = self.dropout2(x)
-
-        x = self.linear_3(x)
-        x = self.linear_batchnorm3(x)
-        x = self.relu(x)
-        #x = self.dropout3(x)
-
-        x = self.linear_4(x)
-        x = self.linear_batchnorm4(x)
-        x = self.relu(x)
-
-        return self.linear_out(x)
+        return self.linear_out(x4)

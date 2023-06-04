@@ -1,12 +1,9 @@
-# Свертка по фичам
-import math
-
 from torch import nn
 
 
 def calculate_shape(x, n_layers=4):
     for i in range(n_layers):
-        x = (x - 2) / 2
+        x = (x - 4) / 2
 
     return int(x)
 
@@ -29,32 +26,46 @@ def conv_block(in_ch, out_ch, kernel_size, pooling_kernel_size):
     )
 
 
-class Conv2Model(nn.Module):
-    def __init__(self, num_class, feature_size, time_size, n_conv_layers=4):
-        super(Conv2Model, self).__init__()
+class CRNNModel(nn.Module):
+    def __init__(self, time_size, feature_size, num_class):
+        super(CRNNModel, self).__init__()
 
-        self.conv_layers = nn.ModuleList()
-        self.conv_layers.append(conv_block(1, 16, (1, 3), (1, 2)))
-        self.conv_layers.append(conv_block(16, 32, (1, 3), (1, 2)))
+        self.conv1 = conv_block(1, 16, (5, 1), (2, 1))
+        self.conv2 = conv_block(16, 32, (5, 1), (2, 1))
+        self.conv3 = conv_block(32, 32, (5, 1), (2, 1))
+        self.conv4 = conv_block(32, 32, (5, 1), (2, 1))
 
-        for i in range(n_conv_layers - 2):
-            self.conv_layers.append(conv_block(32, 32, (1, 3), (1, 2)))
+        self.lstm = nn.LSTM(
+            feature_size * 32,
+            256,
+            bidirectional=False,
+            batch_first=True,
+            num_layers=3
+        )
+        self.tanh = nn.Tanh()
 
-        self.linear_1 = linear_block(32 * time_size * calculate_shape(feature_size, n_conv_layers), 256)
+        self.linear_1 = linear_block(256, 256)
         self.linear_2 = linear_block(256, 256)
         self.linear_3 = linear_block(256, 256)
         self.linear_4 = linear_block(256, 256)
 
         self.linear_out = linear_block(256, num_class)
 
+
+
     def forward(self, x):
         x = x[:, None, :, :]
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
 
+        x = x.permute(0, 2, 1, 3)
+        x = x.flatten(start_dim=2)
 
-        for layer in self.conv_layers:
-            x = layer(x)
-
-        x = x.flatten(start_dim=1)
+        out, _ = self.lstm(x)
+        out = out[:, -1]
+        x = self.tanh(out)
 
         x1 = self.linear_1(x)
         x2 = self.linear_2(x1) + x1
